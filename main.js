@@ -67,44 +67,108 @@ document.addEventListener('DOMContentLoaded', () => {
             const card = document.createElement('div');
             card.className = 'phrase-card';
             card.style.animation = `fadeIn 0.5s ease backwards ${index * 0.05}s`;
-            card.innerHTML = `
-                <div class="phrase-header">
-                    <span class="phrase-title">${phrase.title}</span>
-                    <button class="btn-icon btn-delete" title="削除">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                    </button>
-                </div>
-                <div class="phrase-content">${phrase.content}</div>
-                <div class="phrase-actions">
-                    <button class="btn btn-primary" style="width: 100%;">Click to Copy</button>
-                </div>
-            `;
 
-            card.addEventListener('click', (e) => {
-                if (e.target.closest('.btn-delete')) return;
-                copyToClipboard(phrase.content);
-                card.style.transform = 'scale(0.98)';
-                setTimeout(() => card.style.transform = '', 100);
-            });
+            // 通常モードの表示
+            const renderNormalMode = () => {
+                card.innerHTML = `
+                    <div class="phrase-header">
+                        <span class="phrase-title">${phrase.title}</span>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn-icon btn-edit" title="編集">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            </button>
+                            <button class="btn-icon btn-delete" title="削除">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="phrase-content">${phrase.content}</div>
+                    <div class="phrase-actions">
+                        <button class="btn btn-primary" style="width: 100%;">Click to Copy</button>
+                    </div>
+                `;
 
-            const deleteBtn = card.querySelector('.btn-delete');
-            deleteBtn.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                if (confirm('この定型文をD1から完全に削除しますか？')) {
+                // 編集ボタン
+                card.querySelector('.btn-edit').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    renderEditMode();
+                });
+
+                // 削除ボタン
+                card.querySelector('.btn-delete').addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    if (confirm('この定型文をD1から完全に削除しますか？')) {
+                        try {
+                            const response = await fetch(`/api/phrases?id=${phrase.id}`, {
+                                method: 'DELETE'
+                            });
+                            if (response.ok) {
+                                showToast('D1から削除しました 🗑️');
+                                fetchPhrases();
+                            }
+                        } catch (error) {
+                            showToast('削除に失敗しました ❌');
+                        }
+                    }
+                });
+
+                // コピー機能
+                card.addEventListener('click', (e) => {
+                    if (e.target.closest('.btn-delete') || e.target.closest('.btn-edit')) return;
+                    copyToClipboard(phrase.content);
+                    card.style.transform = 'scale(0.98)';
+                    setTimeout(() => card.style.transform = '', 100);
+                });
+            };
+
+            // 編集モードの表示
+            const renderEditMode = () => {
+                card.innerHTML = `
+                    <div class="phrase-header">
+                        <input type="text" class="edit-title" value="${phrase.title}" style="width: 100%; margin-right: 0.5rem; background: rgba(0,0,0,0.3);">
+                    </div>
+                    <textarea class="edit-content" style="width: 100%; margin: 1rem 0; min-height: 100px; background: rgba(0,0,0,0.3);">${phrase.content}</textarea>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn-primary btn-save-edit" style="flex: 1;">保存</button>
+                        <button class="btn btn-cancel-edit" style="flex: 1; background: rgba(255,255,255,0.1); color: white;">キャンセル</button>
+                    </div>
+                `;
+
+                const saveBtn = card.querySelector('.btn-save-edit');
+                const cancelBtn = card.querySelector('.btn-cancel-edit');
+
+                saveBtn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const newTitle = card.querySelector('.edit-title').value.trim();
+                    const newContent = card.querySelector('.edit-content').value.trim();
+
+                    if (!newTitle || !newContent) {
+                        showToast('タイトルと本文を入力してください ⚠️');
+                        return;
+                    }
+
                     try {
-                        const response = await fetch(`/api/phrases?id=${phrase.id}`, {
-                            method: 'DELETE'
+                        const response = await fetch('/api/phrases', {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ id: phrase.id, title: newTitle, content: newContent })
                         });
                         if (response.ok) {
-                            showToast('D1から削除しました 🗑️');
-                            fetchPhrases(); // リストを再取得
+                            showToast('D1を更新しました！ ✏️');
+                            fetchPhrases();
                         }
                     } catch (error) {
-                        showToast('削除に失敗しました ❌');
+                        showToast('更新に失敗しました ❌');
                     }
-                }
-            });
+                });
 
+                cancelBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    renderNormalMode();
+                });
+            };
+
+            renderNormalMode();
             listContainer.appendChild(card);
         });
     }

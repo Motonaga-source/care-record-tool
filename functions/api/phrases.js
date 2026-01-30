@@ -54,6 +54,22 @@ export async function onRequest(context) {
         }
     }
 
+    // PUT: 更新
+    if (request.method === "PUT") {
+        try {
+            const { id, title, content } = await request.json();
+            if (!id || !title || !content) {
+                return new Response("Missing id, title, or content", { status: 400 });
+            }
+            await DB.prepare(
+                "UPDATE phrases SET title = ?, content = ? WHERE id = ?"
+            ).bind(title, content, id).run();
+            return new Response(JSON.stringify({ success: true }));
+        } catch (e) {
+            return new Response(JSON.stringify({ error: e.message }), { status: 500 });
+        }
+    }
+
     if (request.method === "DELETE") {
         try {
             const url = new URL(request.url);
