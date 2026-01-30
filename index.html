@@ -30,10 +30,16 @@
                     <textarea id="contentInput" placeholder="定型文を入力してください..." style="margin-top: 1rem;"></textarea>
                 </div>
                 <div id="bulkInputFields" style="display: none;">
-                    <textarea id="bulkJsonInput"
-                        placeholder='[{"title": "件名1", "content": "内容1"}, {"title": "件名2", "content": "内容2"}]'
-                        style="min-height: 200px;"></textarea>
-                    <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem;">JSON形式の配列で入力してください
+                    <div id="bulkRowsContainer" style="display: flex; flex-direction: column; gap: 1.5rem;">
+                        <!-- ここに動的に入力行が追加されます -->
+                    </div>
+                    <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                        <button id="addBulkRowBtn" class="btn"
+                            style="flex: 1; background: rgba(255,255,255,0.05); color: var(--accent); border: 1px dashed var(--accent);">+
+                            行を追加</button>
+                    </div>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 1rem;">
+                        ※ 必要な分だけ行を追加して入力してください。
                     </p>
                 </div>
                 <div style="display: flex; gap: 1rem; margin-top: 1rem;">

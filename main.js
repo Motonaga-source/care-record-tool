@@ -5,7 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const toggleBulkBtn = document.getElementById('toggleBulkBtn');
     const singleInputFields = document.getElementById('singleInputFields');
     const bulkInputFields = document.getElementById('bulkInputFields');
-    const bulkJsonInput = document.getElementById('bulkJsonInput');
+    const bulkRowsContainer = document.getElementById('bulkRowsContainer');
+    const addBulkRowBtn = document.getElementById('addBulkRowBtn');
     const listContainer = document.getElementById('listContainer');
     const searchInput = document.getElementById('searchInput');
     const toast = document.getElementById('toast');
@@ -111,13 +112,42 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function createBulkRow() {
+        const row = document.createElement('div');
+        row.className = 'bulk-row';
+        row.style.background = 'rgba(0,0,0,0.2)';
+        row.style.padding = '1rem';
+        row.style.borderRadius = '1rem';
+        row.style.border = '1px solid var(--card-border)';
+        row.style.position = 'relative';
+        row.innerHTML = `
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <input type="text" class="bulk-title" placeholder="タイトル (例: 会議連絡)" style="background: rgba(0,0,0,0.3);">
+                <textarea class="bulk-content" placeholder="定型文を入力してください..." style="background: rgba(0,0,0,0.3); min-height: 80px;"></textarea>
+            </div>
+            <button class="remove-bulk-row" style="position: absolute; top: -10px; right: -10px; background: var(--danger); color: white; border: none; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">✕</button>
+        `;
+
+        row.querySelector('.remove-bulk-row').addEventListener('click', () => {
+            row.remove();
+            if (bulkRowsContainer.children.length === 0) createBulkRow();
+        });
+
+        bulkRowsContainer.appendChild(row);
+    }
+
     toggleBulkBtn.addEventListener('click', () => {
         isBulkMode = !isBulkMode;
         if (isBulkMode) {
             singleInputFields.style.display = 'none';
             bulkInputFields.style.display = 'block';
             toggleBulkBtn.textContent = '通常登録に戻す';
-            addBtn.textContent = '一括登録を実行';
+            addBtn.textContent = 'D1へ一括保存';
+            if (bulkRowsContainer.children.length === 0) {
+                createBulkRow();
+                createBulkRow();
+                createBulkRow(); // 最初に3つくらい出しておく
+            }
         } else {
             singleInputFields.style.display = 'block';
             bulkInputFields.style.display = 'none';
@@ -126,18 +156,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    addBulkRowBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        createBulkRow();
+    });
+
     addBtn.addEventListener('click', async () => {
         if (isBulkMode) {
-            const jsonText = bulkJsonInput.value.trim();
-            if (!jsonText) {
-                showToast('JSONを入力してください ⚠️');
+            const rows = bulkRowsContainer.querySelectorAll('.bulk-row');
+            const data = [];
+
+            rows.forEach(row => {
+                const title = row.querySelector('.bulk-title').value.trim();
+                const content = row.querySelector('.bulk-content').value.trim();
+                if (title && content) {
+                    data.push({ title, content });
+                }
+            });
+
+            if (data.length === 0) {
+                showToast('タイトルと本文を入力してください ⚠️');
                 return;
             }
+
             try {
-                const data = JSON.parse(jsonText);
-                if (!Array.isArray(data)) {
-                    throw new Error('配列形式で入力してください');
-                }
                 const response = await fetch('/api/phrases', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -145,10 +187,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 if (response.ok) {
                     fetchPhrases();
-                    bulkJsonInput.value = '';
-                    showToast(`${data.length}件を登録しました！ 🚀`);
+                    bulkRowsContainer.innerHTML = '';
+                    createBulkRow();
+                    createBulkRow();
+                    createBulkRow();
+                    showToast(`${data.length}件をD1に保存しました！ 🚀`);
                 } else {
-                    throw new Error('登録に失敗しました');
+                    throw new Error('保存に失敗しました');
                 }
             } catch (error) {
                 showToast(`エラー: ${error.message} ❌`);
