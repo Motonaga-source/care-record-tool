@@ -15,9 +15,26 @@ export async function onRequest(context) {
         }
     }
 
+    // POST: 新規作成（単一または一括）
     if (request.method === "POST") {
         try {
-            const { title, content } = await request.json();
+            const data = await request.json();
+
+            // 配列（一括登録）の場合
+            if (Array.isArray(data)) {
+                const statements = data.map(item => {
+                    if (!item.title || !item.content) {
+                        throw new Error("Missing title or content in one of the batch items");
+                    }
+                    return DB.prepare("INSERT INTO phrases (title, content) VALUES (?, ?)")
+                        .bind(item.title, item.content);
+                });
+                await DB.batch(statements);
+                return new Response(JSON.stringify({ success: true, count: data.length }), { status: 201 });
+            }
+
+            // 単一登録の場合
+            const { title, content } = data;
             if (!title || !content) {
                 return new Response("Missing title or content", { status: 400 });
             }

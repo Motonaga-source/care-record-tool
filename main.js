@@ -2,10 +2,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const titleInput = document.getElementById('titleInput');
     const contentInput = document.getElementById('contentInput');
     const addBtn = document.getElementById('addBtn');
+    const toggleBulkBtn = document.getElementById('toggleBulkBtn');
+    const singleInputFields = document.getElementById('singleInputFields');
+    const bulkInputFields = document.getElementById('bulkInputFields');
+    const bulkJsonInput = document.getElementById('bulkJsonInput');
     const listContainer = document.getElementById('listContainer');
     const searchInput = document.getElementById('searchInput');
     const toast = document.getElementById('toast');
 
+    let isBulkMode = false;
     let phrases = [];
 
     function showToast(message) {
@@ -106,7 +111,51 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    toggleBulkBtn.addEventListener('click', () => {
+        isBulkMode = !isBulkMode;
+        if (isBulkMode) {
+            singleInputFields.style.display = 'none';
+            bulkInputFields.style.display = 'block';
+            toggleBulkBtn.textContent = '通常登録に戻す';
+            addBtn.textContent = '一括登録を実行';
+        } else {
+            singleInputFields.style.display = 'block';
+            bulkInputFields.style.display = 'none';
+            toggleBulkBtn.textContent = '一括モード切替';
+            addBtn.textContent = '定型文を登録';
+        }
+    });
+
     addBtn.addEventListener('click', async () => {
+        if (isBulkMode) {
+            const jsonText = bulkJsonInput.value.trim();
+            if (!jsonText) {
+                showToast('JSONを入力してください ⚠️');
+                return;
+            }
+            try {
+                const data = JSON.parse(jsonText);
+                if (!Array.isArray(data)) {
+                    throw new Error('配列形式で入力してください');
+                }
+                const response = await fetch('/api/phrases', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (response.ok) {
+                    fetchPhrases();
+                    bulkJsonInput.value = '';
+                    showToast(`${data.length}件を登録しました！ 🚀`);
+                } else {
+                    throw new Error('登録に失敗しました');
+                }
+            } catch (error) {
+                showToast(`エラー: ${error.message} ❌`);
+            }
+            return;
+        }
+
         const title = titleInput.value.trim();
         const content = contentInput.value.trim();
 
