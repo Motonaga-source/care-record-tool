@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const titleInput = document.getElementById('titleInput');
     const contentInput = document.getElementById('contentInput');
     const addBtn = document.getElementById('addBtn');
-    const saveBtn = document.getElementById('saveBtn');
     const listContainer = document.getElementById('listContainer');
     const searchInput = document.getElementById('searchInput');
     const toast = document.getElementById('toast');
@@ -89,12 +88,20 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             const deleteBtn = card.querySelector('.btn-delete');
-            deleteBtn.addEventListener('click', (e) => {
+            deleteBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                if (confirm('リストから削除しますか？（保存ボタンを押すまでD1には反映されません）')) {
-                    phrases.splice(index, 1);
-                    renderPhrases(searchInput.value);
-                    showToast('リストから削除しました 🗑️');
+                if (confirm('この定型文をD1から完全に削除しますか？')) {
+                    try {
+                        const response = await fetch(`/api/phrases?id=${phrase.id}`, {
+                            method: 'DELETE'
+                        });
+                        if (response.ok) {
+                            showToast('D1から削除しました 🗑️');
+                            fetchPhrases(); // リストを再取得
+                        }
+                    } catch (error) {
+                        showToast('削除に失敗しました ❌');
+                    }
                 }
             });
 
@@ -102,8 +109,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // リストに追加
-    addBtn.addEventListener('click', () => {
+    // D1に登録して即反映
+    addBtn.addEventListener('click', async () => {
         const title = titleInput.value.trim();
         const content = contentInput.value.trim();
 
@@ -112,36 +119,24 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        phrases.unshift({ title, content });
-        renderPhrases(searchInput.value);
-        titleInput.value = '';
-        contentInput.value = '';
-        showToast('リストに追加しました（保存をお忘れなく！） 📍');
-    });
-
-    // D1に保存
-    saveBtn.addEventListener('click', async () => {
-        saveBtn.disabled = true;
-        const originalText = saveBtn.textContent;
-        saveBtn.textContent = '保存中...';
-
         try {
             const response = await fetch('/api/phrases', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(phrases)
+                body: JSON.stringify({ title, content })
             });
 
             if (response.ok) {
-                showToast('D1にすべての定型文を保存しました！ ☁️');
+                titleInput.value = '';
+                contentInput.value = '';
+                showToast('D1に登録しました！ 🚀');
+                fetchPhrases(); // リストを再取得
             } else {
-                throw new Error('保存に失敗しました');
+                throw new Error('登録に失敗しました');
             }
         } catch (error) {
-            showToast('エラーが発生しました ❌');
-        } finally {
-            saveBtn.disabled = false;
-            saveBtn.textContent = originalText;
+            console.error('Add error:', error);
+            showToast('登録に失敗しました ❌');
         }
     });
 
