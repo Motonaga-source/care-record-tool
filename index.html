@@ -25,27 +25,12 @@
 
         <div class="add-section">
             <div class="input-group">
-                <div id="singleInputFields">
-                    <input type="text" id="titleInput" placeholder="タイトル (例: 会議連絡)">
-                    <textarea id="contentInput" placeholder="定型文を入力してください..." style="margin-top: 1rem;"></textarea>
-                </div>
-                <div id="bulkInputFields" style="display: none;">
-                    <div id="bulkRowsContainer" style="display: flex; flex-direction: column; gap: 1.5rem;">
-                        <!-- ここに動的に入力行が追加されます -->
-                    </div>
-                    <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
-                        <button id="addBulkRowBtn" class="btn"
-                            style="flex: 1; background: rgba(255,255,255,0.05); color: var(--accent); border: 1px dashed var(--accent);">+
-                            行を追加</button>
-                    </div>
-                    <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 1rem;">
-                        ※ 必要な分だけ行を追加して入力してください。
-                    </p>
-                </div>
+                <input type="text" id="titleInput" placeholder="タイトル (例: 会議連絡)">
+                <textarea id="contentInput" placeholder="定型文を入力してください..." style="margin-top: 1rem;"></textarea>
                 <div style="display: flex; gap: 1rem; margin-top: 1rem;">
-                    <button id="addBtn" class="btn btn-primary" style="flex: 2;">定型文を登録</button>
-                    <button id="toggleBulkBtn" class="btn"
-                        style="flex: 1; background: rgba(255,255,255,0.1); color: white; border: 1px solid var(--card-border);">一括モード切替</button>
+                    <button id="addBtn" class="btn btn-primary" style="flex: 2;">リストに追加</button>
+                    <button id="saveBtn" class="btn"
+                        style="flex: 1; background: var(--success); color: #1a202c; border: none;">D1に保存</button>
                 </div>
             </div>
         </div>

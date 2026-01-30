@@ -20,15 +20,22 @@ export async function onRequest(context) {
         try {
             const data = await request.json();
 
-            // 配列（一括登録）の場合
+            // 配列（現在のリストでD1を上書き）の場合
             if (Array.isArray(data)) {
-                const statements = data.map(item => {
-                    if (!item.title || !item.content) {
-                        throw new Error("Missing title or content in one of the batch items");
+                // トランザクション的に処理
+                const statements = [
+                    DB.prepare("DELETE FROM phrases") // 一旦全削除
+                ];
+
+                data.forEach(item => {
+                    if (item.title && item.content) {
+                        statements.push(
+                            DB.prepare("INSERT INTO phrases (title, content) VALUES (?, ?)")
+                                .bind(item.title, item.content)
+                        );
                     }
-                    return DB.prepare("INSERT INTO phrases (title, content) VALUES (?, ?)")
-                        .bind(item.title, item.content);
                 });
+
                 await DB.batch(statements);
                 return new Response(JSON.stringify({ success: true, count: data.length }), { status: 201 });
             }
