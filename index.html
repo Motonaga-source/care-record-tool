@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>定型文コピーツール | Cloudflare Pages</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <meta name="description" content="ブラウザで簡単に定型文を管理・コピーできるツールです。">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Text Copier</h1>
+            <p>よく使う文章をワンクリックでコピー</p>
+        </header>
+
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="定型文を検索...">
+        </div>
+
+        <div class="add-section">
+            <div class="input-group">
+                <input type="text" id="titleInput" placeholder="タイトル (例: 会議連絡)">
+                <textarea id="contentInput" placeholder="定型文を入力してください..."></textarea>
+                <button id="addBtn" class="btn btn-primary">定型文を登録</button>
+            </div>
+        </div>
+
+        <div id="listContainer" class="list-container">
+            <!-- 定型文カードがここに表示されます -->
+        </div>
+    </div>
+
+    <div id="toast" class="toast">コピーしました！</div>
+
+    <script src="main.js"></script>
+</body>
+
+</html>
